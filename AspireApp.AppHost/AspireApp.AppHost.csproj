@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Sdk Name="Aspire.AppHost.Sdk" Version="9.5.0" />
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UserSecretsId>e78f36a8-1b08-4d37-852f-c7bd4225c99b</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.AppHost" Version="13.3.4" />
+    <PackageReference Include="Aspire.Hosting.Azure.Functions" Version="13.3.4" />
+    <PackageReference Include="Aspire.Hosting.Kafka" Version="13.3.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AzureFunction\AzureFunction.csproj" />
+    <ProjectReference Include="..\KafkaConsumer\KafkaConsumer.csproj" />
+    <ProjectReference Include="..\KafkaProducer\KafkaProducer.csproj" />
+  </ItemGroup>
+
+</Project>
