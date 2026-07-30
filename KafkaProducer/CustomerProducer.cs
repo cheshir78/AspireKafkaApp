@@ -17,19 +17,19 @@ namespace KafkaProducer
             _producer = producer;
         }
 
-        public async Task RunAsync()
+        public async Task RunAsync(CancellationToken cancellationToken = default)
         {
-            while (true)
+            while (!cancellationToken.IsCancellationRequested)
             {
                 // produce Employee
                 var contact = new ContactEmployee("12345678")
                 {
                     IsEmployee = true
                 };
-                var transferObject = new BusObject<ContactEmployee>(DateTime.Now, contact);
+                var transferObject = new BusObject<ContactEmployee>(DateTime.UtcNow, contact);
                 var dr = await _producer.ProduceAsync(BrokerNames.CUSTOMER_EMPLOYEE, new Message<string, string> { Value = JsonSerializer.Serialize(transferObject) });
-                _logger.LogInformation($"Delivered employee'{dr.Value}' to '{dr.TopicPartitionOffset}'");
-                await Task.Delay(TimeSpan.FromSeconds(5));
+                _logger.LogInformation("Delivered employee '{Value}' to '{TopicPartitionOffset}'", dr.Value, dr.TopicPartitionOffset);
+                await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
 
                 // produce Customer
                 var contactCustomer = new ContactCustomer("123456789")
@@ -37,10 +37,10 @@ namespace KafkaProducer
                     IsEmployee = false,
                     IsMono = true
                 };
-                var transferObjectCustomer = new BusObject<ContactCustomer>(DateTime.Now, contactCustomer);
+                var transferObjectCustomer = new BusObject<ContactCustomer>(DateTime.UtcNow, contactCustomer);
                 var dr1 = await _producer.ProduceAsync(BrokerNames.CUSTOMER_EMPLOYEE, new Message<string, string> { Value = JsonSerializer.Serialize(transferObjectCustomer) });
-                _logger.LogInformation($"Delivered customer '{dr1.Value}' to '{dr1.TopicPartitionOffset}'");
-                await Task.Delay(TimeSpan.FromSeconds(5));
+                _logger.LogInformation("Delivered customer '{Value}' to '{TopicPartitionOffset}'", dr1.Value, dr1.TopicPartitionOffset);
+                await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
             }
         }
     }

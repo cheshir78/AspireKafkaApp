@@ -1,6 +1,6 @@
-﻿using CommonModels.Contracts;
-using CommonModels.Constants;
+﻿using CommonModels.Constants;
 using Confluent.Kafka;
+using KafkaConsumer.Interfaces;
 using System.Text;
 
 namespace KafkaConsumer.Messaging
@@ -8,7 +8,6 @@ namespace KafkaConsumer.Messaging
     public class DlqService : IDlqService
     {
         private readonly IProducer<string, string> _producer;
-
 
         public DlqService(IProducer<string, string> producer)
         {
@@ -20,7 +19,7 @@ namespace KafkaConsumer.Messaging
             // Copy headers
             var headers = consumeResult.Message.Headers ?? new Headers();
 
-            // Add metadata about exeption into Kafka headers
+            // Add metadata about exception into Kafka headers
             headers.Add("dlq-reason", Encoding.UTF8.GetBytes(reason));
             headers.Add("dlq-exception", Encoding.UTF8.GetBytes(exception?.Message ?? "None"));
             headers.Add("dlq-original-partition", Encoding.UTF8.GetBytes(consumeResult.Partition.Value.ToString()));
@@ -29,7 +28,7 @@ namespace KafkaConsumer.Messaging
             var dlqMessage = new Message<string, string>
             {
                 Key = consumeResult.Message.Key,
-                Value = consumeResult.Message.Value, // copy original topic
+                Value = consumeResult.Message.Value, // copy original message
                 Headers = headers
             };
 

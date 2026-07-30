@@ -1,6 +1,4 @@
-﻿using CommonModels.Contracts;
-
-namespace KafkaConsumer.Handlers
+﻿namespace CommonModels.Contracts
 {
     public interface IBusObjectHandlerFactory
     {

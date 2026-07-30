@@ -1,7 +1,8 @@
-﻿using CommonModels.Constants;
-using CommonModels.Contracts;
+﻿using CommonModels.Contracts;
+using CommonModels.Constants;
 using Confluent.Kafka;
 using KafkaConsumer.Handlers;
+using KafkaConsumer.Interfaces;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
@@ -24,10 +25,10 @@ public class CustomerConsumerService : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _consumer.Subscribe(BrokerNames.CUSTOMER_EMPLOYEE);
-        _logger.LogInformation($"Subscribed to topic: {BrokerNames.CUSTOMER_EMPLOYEE}");
+        _logger.LogInformation("Subscribed to topic: {Topic}", BrokerNames.CUSTOMER_EMPLOYEE);
 
         // Start loop in separate thread
-        await Task.Run(() => ConsumeLoop(stoppingToken), stoppingToken);
+        await Task.Run(() => ConsumeLoop(stoppingToken));
     }
 
     private async Task ConsumeLoop(CancellationToken stoppingToken)
@@ -42,31 +43,31 @@ public class CustomerConsumerService : BackgroundService
 
                 if (consumeResult == null || consumeResult.IsPartitionEOF) continue;
 
-                _logger.LogInformation($"Received message from partition {consumeResult.Partition} with offset {consumeResult.Offset}");
+                _logger.LogInformation("Received message from partition {Partition} with offset {Offset}", consumeResult.Partition, consumeResult.Offset);
 
                 await ProcessBusinessLogic(consumeResult.Message.Value);
 
                 _consumer.Commit(consumeResult);
 
-                _logger.LogInformation($"Successfully processed and committed offset: {consumeResult.Offset}");
+                _logger.LogInformation("Successfully processed and committed offset: {Offset}", consumeResult.Offset);
             }
             catch (ConsumeException e)
             {
-                _logger.LogError($"Kafka consume error: {e.Error.Reason}");
+                _logger.LogError("Kafka consume error: {Reason}", e.Error.Reason);
             }
             catch (JsonException ex)
             {
-                _logger.LogError($"JSON Deserialization error: {ex.Message}. Message moved to DLQ.");
+                _logger.LogError(ex, "JSON Deserialization error. Message moved to DLQ.");
                 if (consumeResult != null)
                 {
-                    await _dlqService.SendToDlqAsync(consumeResult, "[DLQ] Deserrialization error (JSON).", ex);
+                    await _dlqService.SendToDlqAsync(consumeResult, "[DLQ] Deserialization error (JSON).", ex);
 
                     _consumer.Commit(consumeResult);
                 }
             }
             catch (NotSupportedException ex)
             {
-                _logger.LogWarning($"Skip unknown message: {ex.Message}");
+                _logger.LogWarning(ex, "Skip unknown message.");
                 if (consumeResult != null)
                 {
                     await _dlqService.SendToDlqAsync(consumeResult, "[DLQ] Unsupported message type", ex);
@@ -76,7 +77,7 @@ public class CustomerConsumerService : BackgroundService
             }
             catch (Exception e)
             {
-                _logger.LogError($"Critical error during business processing: {e.Message}");
+                _logger.LogError(e, "Critical error during business processing.");
                 await Task.Delay(2000, stoppingToken);
             }
         }
@@ -86,7 +87,7 @@ public class CustomerConsumerService : BackgroundService
     {
         if (string.IsNullOrEmpty(rawJson))
         {
-            _logger.LogError($"Processing client data is null");
+            _logger.LogError("Received empty message, skipping processing.");
             return;
         }
 
@@ -94,7 +95,7 @@ public class CustomerConsumerService : BackgroundService
 
         await handler.HandleAsync(rawJson);
 
-        _logger.LogInformation($"Processing client data created at: {rawJson}");
+        _logger.LogInformation("Successfully processed message.");
     }
 
     public override void Dispose()
