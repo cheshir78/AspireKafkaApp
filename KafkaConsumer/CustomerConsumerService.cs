@@ -78,7 +78,14 @@ public class CustomerConsumerService : BackgroundService
             catch (Exception e)
             {
                 _logger.LogError(e, "Critical error during business processing.");
-                await Task.Delay(2000, stoppingToken);
+                try
+                {
+                    await Task.Delay(2000, stoppingToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    // Shutdown requested during backoff delay — exit loop gracefully
+                }
             }
         }
     }
