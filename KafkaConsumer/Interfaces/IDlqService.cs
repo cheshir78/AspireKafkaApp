@@ -1,6 +1,6 @@
 ﻿using Confluent.Kafka;
 
-namespace CommonModels.Contracts
+namespace KafkaConsumer.Interfaces
 {
     public interface IDlqService
     {

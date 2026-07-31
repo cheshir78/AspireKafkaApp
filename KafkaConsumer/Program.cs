@@ -2,6 +2,7 @@
 using CommonModels.Contracts;
 using Confluent.Kafka;
 using KafkaConsumer.Handlers;
+using KafkaConsumer.Interfaces;
 using KafkaConsumer.Messaging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
