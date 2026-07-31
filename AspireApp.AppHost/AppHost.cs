@@ -6,12 +6,15 @@ var kafka = builder.AddKafka("kafka", 9092)
 
 builder.AddAzureFunctionsProject<Projects.AzureFunction>("azurefunction")
     .WithReference(kafka)
-    .WithEnvironment("BrokerList", "localhost:9092");
+    .WithEnvironment("BrokerList", "localhost:9092")
+    .WaitFor(kafka);
 
 var producer = builder.AddProject<Projects.KafkaProducer>("kafka-producer")
-    .WithReference(kafka);
+    .WithReference(kafka)
+    .WaitFor(kafka);
 
 var consumer = builder.AddProject<Projects.KafkaConsumer>("kafka-consumer")
-    .WithReference(kafka);
+    .WithReference(kafka)
+    .WaitFor(kafka);
 
 builder.Build().Run();
