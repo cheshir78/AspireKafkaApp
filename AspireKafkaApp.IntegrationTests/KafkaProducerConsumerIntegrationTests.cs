@@ -115,7 +115,6 @@ public class KafkaProducerConsumerIntegrationTests : IAsyncLifetime
         const string mainTopic = "it-dlq-main";
         const string dlqTopic = BrokerNames.DLQ_CUSTOMER_EMPLOYEE;
         var (producer, mainConsumer) = CreateClients(mainTopic, "it-dlq-main-group");
-        var (_, dlqConsumer) = CreateClients(dlqTopic, "it-dlq-consumer-group");
 
         const string brokenJson = "this-is-not-valid-json";
         const string dlqReason = "[DLQ] Deserialization error (JSON).";
@@ -139,6 +138,10 @@ public class KafkaProducerConsumerIntegrationTests : IAsyncLifetime
             Value = badMsg.Message.Value,
             Headers = dlqHeaders
         });
+
+        // Create the DLQ consumer after the topic has been created by the producer above,
+        // so the broker does not report "Unknown topic or partition" on subscribe.
+        var (_, dlqConsumer) = CreateClients(dlqTopic, "it-dlq-consumer-group");
 
         // Assert DLQ consumer receives the message with headers
         var dlqResult = dlqConsumer.Consume(TimeSpan.FromSeconds(15));
